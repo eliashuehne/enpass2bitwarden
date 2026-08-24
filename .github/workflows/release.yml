@@ -69,3 +69,34 @@ jobs:
         with:
           generate_release_notes: true
           files: dist/*
+
+  tap:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update homebrew tap
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          git clone -q "https://x-access-token:${{ secrets.TAP_TOKEN }}@github.com/eliashuehne/homebrew-enpass2bitwarden.git" tap
+          cd tap
+          # regenerate formula from the template in the main repo
+          curl -sL -o Formula/enpass2bitwarden.rb \
+            "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/Formula/enpass2bitwarden.rb"
+          sed -i "s/version \"[^\"]*\"/version \"$VERSION\"/" Formula/enpass2bitwarden.rb
+          for f in enpass2bitwarden-darwin-arm64 enpass2bitwarden-linux-amd64 enpass2bitwarden-linux-arm64; do
+            sha=$(curl -sL "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/$f" | sha256sum | cut -d' ' -f1)
+            # replace sha on the line following the matching url
+            python3 - "$f" "$sha" <<'PYEOF'
+import re,sys
+plat,sha=sys.argv[1],sys.argv[2]
+s=open('Formula/enpass2bitwarden.rb').read()
+pat=re.compile(r'(url "https://[^"]*'+re.escape(plat)+r'"\n\s*sha256 ")[0-9a-f]+(")')
+assert pat.search(s), plat
+open('Formula/enpass2bitwarden.rb','w').write(pat.sub(r'\g<1>'+sha+r'\g<2>', s))
+PYEOF
+          done
+          git config user.email "action@github.com"
+          git config user.name "release-bot"
+          if ! git diff --quiet; then
+            git add -A && git commit -m "${GITHUB_REF_NAME}" && git push origin main
+          fi
