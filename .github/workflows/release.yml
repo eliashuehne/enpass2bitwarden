@@ -85,16 +85,11 @@ jobs:
           sed -i "s/version \"[^\"]*\"/version \"$VERSION\"/" Formula/enpass2bitwarden.rb
           for f in enpass2bitwarden-darwin-arm64 enpass2bitwarden-linux-amd64 enpass2bitwarden-linux-arm64; do
             sha=$(curl -sL "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/$f" | sha256sum | cut -d' ' -f1)
-            # replace sha on the line following the matching url
-            python3 - "$f" "$sha" <<'PYEOF'
-import re,sys
-plat,sha=sys.argv[1],sys.argv[2]
-s=open('Formula/enpass2bitwarden.rb').read()
-pat=re.compile(r'(url "https://[^"]*'+re.escape(plat)+r'"\n\s*sha256 ")[0-9a-f]+(")')
-assert pat.search(s), plat
-open('Formula/enpass2bitwarden.rb','w').write(pat.sub(r'\g<1>'+sha+r'\g<2>', s))
-PYEOF
-          done
+              for plat in enpass2bitwarden-darwin-arm64 enpass2bitwarden-linux-amd64 enpass2bitwarden-linux-arm64; do
+              if grep -q "$plat" Formula/enpass2bitwarden.rb; then
+                nl=$(grep -n "$plat" Formula/enpass2bitwarden.rb | cut -d: -f1)
+                sed -i "$((nl+1))s/sha256 \"[0-9a-f]*\"/sha256 \"$sha\"/" Formula/enpass2bitwarden.rb
+              fi
           git config user.email "action@github.com"
           git config user.name "release-bot"
           if ! git diff --quiet; then
