@@ -33,3 +33,10 @@ Open a [GitHub issue](../../issues/new) and include:
 
 Anything touching decryption, key derivation, or the Bitwarden credential
 format will be reviewed carefully before merge — expect questions.
+
+
+## Maintainers: releasing
+
+Push a tag `vX.Y.Z` — CI builds all platforms and creates the GitHub release,
+then auto-updates the Homebrew tap. The tap update needs a repo-scoped PAT
+stored as the `TAP_TOKEN` secret (create once at github.com/settings/tokens).
