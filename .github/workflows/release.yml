@@ -75,23 +75,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          git clone -q "https://x-access-token:${{ secrets.TAP_TOKEN }}@github.com/eliashuehne/homebrew-enpass2bitwarden.git" tap
+          git clone -q "https://x-access-token:${TAP_TOKEN}@github.com/eliashuehne/homebrew-enpass2bitwarden.git" tap
           cd tap
-          # regenerate formula from the template in the main repo
           curl -sL -o Formula/enpass2bitwarden.rb \
             "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/Formula/enpass2bitwarden.rb"
           sed -i "s/version \"[^\"]*\"/version \"$VERSION\"/" Formula/enpass2bitwarden.rb
           for f in enpass2bitwarden-darwin-arm64 enpass2bitwarden-linux-amd64 enpass2bitwarden-linux-arm64; do
             sha=$(curl -sL "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/$f" | sha256sum | cut -d' ' -f1)
-              for plat in enpass2bitwarden-darwin-arm64 enpass2bitwarden-linux-amd64 enpass2bitwarden-linux-arm64; do
-              if grep -q "$plat" Formula/enpass2bitwarden.rb; then
-                nl=$(grep -n "$plat" Formula/enpass2bitwarden.rb | cut -d: -f1)
-                sed -i "$((nl+1))s/sha256 \"[0-9a-f]*\"/sha256 \"$sha\"/" Formula/enpass2bitwarden.rb
-              fi
+            nl=$(grep -n "$f" Formula/enpass2bitwarden.rb | head -1 | cut -d: -f1)
+            sed -i "$((nl+1))s/sha256 \"[0-9a-f]*\"/sha256 \"$sha\"/" Formula/enpass2bitwarden.rb
+          done
           git config user.email "action@github.com"
           git config user.name "release-bot"
-          if ! git diff --quiet; then
-            git add -A && git commit -m "${GITHUB_REF_NAME}" && git push origin main
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "${GITHUB_REF_NAME}" && git push origin main
           fi
