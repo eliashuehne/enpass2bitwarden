@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question about usage
+    url: https://github.com/eliashuehne/enpass2bitwarden/discussions
+    about: Ask here after reading the README and docs/TROUBLESHOOTING.md
+  - name: Bitwarden CLI issues
+    url: https://github.com/bitwarden/clients/issues
+    about: Problems with `bw` itself (login, import, sync) belong upstream
+  - name: Enpass support
+    url: https://support.enpass.io/
+    about: Vault corruption, sync problems, client bugs

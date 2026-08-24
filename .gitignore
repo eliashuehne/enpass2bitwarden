@@ -1,0 +1,9 @@
+enpass2bitwarden
+*.enpassdb
+*.enpassattach
+dump.json
+passkeys.json
+*password*
+*pw*
+out/
+attachments/
